@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RAPMAN — Loop Station</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Bungee&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --case: #d9d2bd;
+    --case-dark: #b8ad8f;
+    --lcd: #8fa97a;
+    --lcd-dark: #2a3520;
+    --pink: #e6336b;
+    --red: #c8312f;
+    --yellow: #e8b829;
+    --blue: #2e63a6;
+    --dark: #1a1a1a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    background: #1d1a16;
+    background-image:
+      radial-gradient(circle at 20% 10%, #2a2620 0%, transparent 50%),
+      radial-gradient(circle at 80% 90%, #2a2620 0%, transparent 50%);
+    font-family: 'Barlow Condensed', sans-serif;
+    color: var(--dark);
+    padding: 30px 16px;
+  }
+  body {
+    display: block;
+  }
+  .device {
+    width: min(520px, calc(100vw - 32px));
+    margin: 0 auto;
+    box-sizing: border-box;
+    background: linear-gradient(160deg, var(--case) 0%, var(--case-dark) 100%);
+    border-radius: 28px;
+    padding: 22px 22px 26px;
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.6),
+      inset 0 -3px 0 rgba(0,0,0,0.15),
+      0 25px 60px rgba(0,0,0,0.6),
+      0 2px 0 rgba(0,0,0,0.4);
+    position: relative;
+  }
+  .device::before, .device::after,
+  .device .screw-bl, .device .screw-br {
+    content: "";
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #7a7060, #3a3428);
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,0.2);
+  }
+  .device::before { top: 12px; left: 12px; }
+  .device::after  { top: 12px; right: 12px; }
+  .device .screw-bl { bottom: 12px; left: 12px; }
+  .device .screw-br { bottom: 12px; right: 12px; }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0 18px 14px;
+  }
+  .casio {
+    font-family: 'Bungee', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #1a1a1a;
+  }
+  .rapman {
+    font-family: 'Bungee', sans-serif;
+    font-size: 28px;
+    color: var(--pink);
+    letter-spacing: 3px;
+    text-shadow:
+      2px 2px 0 #fff,
+      3px 3px 0 #1a1a1a;
+    transform: skewX(-8deg);
+  }
+  .model {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #5a5040;
+  }
+
+  .lcd {
+    background: var(--lcd);
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow:
+      inset 0 3px 8px rgba(0,0,0,0.4),
+      inset 0 -1px 0 rgba(255,255,255,0.2),
+      0 2px 0 rgba(255,255,255,0.4);
+    font-family: 'VT323', monospace;
+    color: var(--lcd-dark);
+    position: relative;
+    overflow: hidden;
+  }
+  .lcd::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.04) 0,
+      rgba(0,0,0,0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+  }
+  .lcd-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    line-height: 1.1;
+    gap: 12px;
+  }
+  .lcd-row > * { min-width: 0; white-space: nowrap; }
+  .lcd-title {
+    font-size: 28px;
+    margin: 4px 0 6px;
+    letter-spacing: 1px;
+  }
+  .lcd-status {
+    display: flex;
+    gap: 14px;
+    font-size: 18px;
+  }
+  .lcd-status .on { color: var(--lcd-dark); }
+  .lcd-status .off { color: rgba(42,53,32,0.25); }
+
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #4a4030;
+    margin: 18px 4px 8px;
+    text-transform: uppercase;
+  }
+
+  .tracks {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 12px;
+    background: linear-gradient(180deg, #b8ad8f, #a89d7d);
+    border-radius: 10px;
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,0.25),
+      inset 0 -1px 0 rgba(255,255,255,0.3);
+  }
+  .track-btn {
+    aspect-ratio: 1.4;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 14px;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(180deg, #4a4438 0%, #2a2620 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      0 2px 0 rgba(0,0,0,0.5),
+      0 3px 4px rgba(0,0,0,0.3);
+    transition: transform 0.05s, box-shadow 0.05s;
+    padding: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .track-btn .num { font-size: 15px; }
+  .track-btn .lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+    opacity: 0.75;
+  }
+  .track-btn:hover { filter: brightness(1.15); }
+  .track-btn:active, .track-btn.active {
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 2px 4px rgba(0,0,0,0.5),
+      0 0 0 rgba(0,0,0,0);
+  }
+  .track-btn.active {
+    background: linear-gradient(180deg, var(--pink) 0%, #a8214d 100%);
+  }
+
+  .transport {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .t-btn {
+    border: none;
+    border-radius: 10px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: #fff;
+    padding: 16px 10px;
+    cursor: pointer;
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.25),
+      0 4px 0 rgba(0,0,0,0.4),
+      0 5px 8px rgba(0,0,0,0.3);
+    transition: transform 0.05s, box-shadow 0.05s;
+  }
+  .t-btn:active, .t-btn.held {
+    transform: translateY(3px);
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,0.4),
+      0 1px 0 rgba(0,0,0,0.2);
+  }
+  .play { background: linear-gradient(180deg, #e8504c, var(--red)); }
+  .stop { background: linear-gradient(180deg, #444, #1a1a1a); }
+  .loop { background: linear-gradient(180deg, #f0c84a, #c89818); color: #2a2010; }
+  .loop.active {
+    background: linear-gradient(180deg, #ffe070, var(--yellow));
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,0.4),
+      0 0 12px var(--yellow),
+      0 1px 0 rgba(0,0,0,0.2);
+  }
+
+  .mixer {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, #a89d7d, #b8ad8f);
+    border-radius: 10px;
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,0.2),
+      inset 0 -1px 0 rgba(255,255,255,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ch-label {
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #2a2410;
+    min-width: 42px;
+  }
+  .ms {
+    border: none;
+    border-radius: 6px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 12px;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    cursor: pointer;
+    background: linear-gradient(180deg, #4a4438, #2a2620);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      0 2px 0 rgba(0,0,0,0.4);
+    flex-shrink: 0;
+  }
+  .ms.on {
+    background: linear-gradient(180deg, #ff4040, #a01010);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 0 8px var(--red);
+  }
+  .ms.solo.on {
+    background: linear-gradient(180deg, #f0c84a, #c89818);
+    color: #2a2010;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 0 8px var(--yellow);
+  }
+  .ch input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #2a2620, #5a5040);
+    outline: none;
+  }
+  .ch input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 26px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #e8504c, var(--red));
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .ch input[type=range]::-moz-range-thumb {
+    width: 20px;
+    height: 26px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #e8504c, var(--red));
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+
+  .rec-panel {
+    margin-top: 16px;
+    padding: 12px;
+    background: linear-gradient(180deg, #a89d7d, #b8ad8f);
+    border-radius: 10px;
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,0.25),
+      inset 0 -1px 0 rgba(255,255,255,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .rec-row { display: flex; align-items: center; gap: 10px; }
+  .rec-row label {
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #2a2410;
+    min-width: 56px;
+  }
+  #dev {
+    flex: 1;
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    padding: 6px 8px;
+    background: var(--lcd);
+    color: var(--lcd-dark);
+    border: none;
+    border-radius: 6px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .rec-btn {
+    border: none;
+    border-radius: 10px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 14px;
+    color: #fff;
+    padding: 12px 16px;
+    cursor: pointer;
+    background: linear-gradient(180deg, #5a5040, #2a2620);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.15),
+      0 3px 0 rgba(0,0,0,0.4);
+    transition: transform 0.05s, box-shadow 0.05s;
+  }
+  .rec-btn.armed {
+    background: linear-gradient(180deg, #ff6660, var(--red));
+    animation: recblink 0.6s steps(2) infinite;
+  }
+  .rec-btn.recording {
+    background: linear-gradient(180deg, #ff3030, #a01010);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.4), 0 0 16px var(--red);
+  }
+  @keyframes recblink { 50% { filter: brightness(0.5); } }
+  .slot-group {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    justify-content: flex-end;
+  }
+  .slot {
+    border: none;
+    width: 44px;
+    padding: 10px 0;
+    border-radius: 8px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 13px;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(180deg, #4a4438, #2a2620);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      0 2px 0 rgba(0,0,0,0.4);
+    position: relative;
+  }
+  .slot { opacity: 0.55; }
+  .slot.filled, .slot[data-slot="N"] { opacity: 1; }
+  .slot.filled {
+    background: linear-gradient(180deg, #f0c84a, #c89818);
+    color: #2a2010;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      0 2px 0 rgba(0,0,0,0.4),
+      0 0 8px rgba(232,184,41,0.5);
+  }
+  .slot::after {
+    content: attr(data-status);
+    position: absolute;
+    bottom: -14px; left: 0; right: 0;
+    font-family: 'VT323', monospace;
+    font-size: 11px;
+    color: #2a2410;
+    letter-spacing: 1px;
+    opacity: 0.7;
+  }
+  .slot[data-slot="N"]::after { content: ""; }
+  .slot.selected {
+    background: linear-gradient(180deg, #4ac86a, #2a8042) !important;
+    color: #fff;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 0 10px rgba(74,200,106,0.6) !important;
+    transform: translateY(1px);
+    opacity: 1;
+  }
+  .slot-group { padding-bottom: 14px; }
+
+  .grille {
+    margin-top: 16px;
+    height: 18px;
+    border-radius: 4px;
+    background-image: radial-gradient(circle, #3a3428 1px, transparent 1.8px);
+    background-size: 6px 6px;
+    background-color: rgba(0,0,0,0.05);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .blink { animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0.2; } }
+</style>
+</head>
+<body>
+  <div class="device">
+    <span class="screw-bl"></span><span class="screw-br"></span>
+
+    <div class="brand">
+      <span class="casio">CASIO</span>
+      <span class="rapman">RAPMAN</span>
+      <span class="model">RP-1</span>
+    </div>
+
+    <div class="lcd">
+      <div class="lcd-row">
+        <span id="lcd-track">TRACK --</span>
+        <span class="lcd-status">
+          <span id="st-play" class="off">▶ PLAY</span>
+          <span id="st-loop" class="on">↻ LOOP</span>
+        </span>
+      </div>
+      <div class="lcd-title" id="lcd-title">— SELECT RHYTHM —</div>
+      <div class="lcd-row">
+        <span id="lcd-time">00:00 / 00:00</span>
+        <span id="lcd-vol">VOL ▮▮▮▮▮▮▮▯▯▯</span>
+      </div>
+    </div>
+
+    <div class="section-label">▼ RHYTHM SELECT</div>
+    <div class="tracks" id="tracks"></div>
+
+    <div class="transport">
+      <button class="t-btn play" id="btn-play">▶ PLAY / PAUSE</button>
+      <button class="t-btn stop" id="btn-stop">■ STOP</button>
+      <button class="t-btn loop active" id="btn-loop">↻ LOOP</button>
+    </div>
+
+    <div class="mixer">
+      <div class="ch">
+        <span class="ch-label">LOOP</span>
+        <button class="ms" id="mute-loop" title="Mute">M</button>
+        <button class="ms solo" id="solo-loop" title="Solo">S</button>
+        <input type="range" id="vol-loop" min="0" max="100" value="80" />
+      </div>
+      <div class="ch">
+        <span class="ch-label">DUB</span>
+        <button class="ms" id="mute-dub" title="Mute">M</button>
+        <button class="ms solo" id="solo-dub" title="Solo">S</button>
+        <input type="range" id="vol-dub" min="0" max="100" value="80" />
+      </div>
+      <div class="ch">
+        <span class="ch-label">CLK</span>
+        <button class="ms on" id="mute-clk" title="Mute">M</button>
+        <button class="ms solo" id="solo-clk" title="Solo">S</button>
+        <input type="range" id="vol-clk" min="0" max="100" value="60" />
+      </div>
+    </div>
+
+    <div class="section-label">▼ OVERDUB RECORDER</div>
+    <div class="rec-panel">
+      <div class="rec-row">
+        <label>INPUT</label>
+        <select id="dev"><option value="">— DEFAULT MIC —</option></select>
+      </div>
+      <div class="rec-row">
+        <button class="rec-btn" id="btn-rec">● REC</button>
+        <div class="slot-group">
+          <button class="slot selected" data-slot="N">OFF</button>
+          <button class="slot" data-slot="A">A</button>
+          <button class="slot" data-slot="B">B</button>
+          <button class="slot" data-slot="C">C</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grille"></div>
+  </div>
+
+<script>
+const tracks = [
+  { n: 15, name: 'HEAVY RAP', file: '15 HEAVY RAP.mp3' },
+  { n: 16, name: 'HIP-HOP 1', file: '16 HIP-HOP 1.mp3' },
+  { n: 17, name: 'HIP-HOP 2', file: '17 HIP-HOP 2.mp3' },
+  { n: 18, name: 'HIP-HOP 3', file: '18 HIP-HOP 3.mp3' },
+  { n: 19, name: 'HIP HOP',   file: '19 HIP HOP.mp3' },
+  { n: 20, name: 'MELLOW RAP',file: '20 MELLOW RAP.mp3' },
+  { n: 21, name: 'ROCK 1',    file: '21 ROCK 1.mp3' },
+  { n: 22, name: 'ROCK 2',    file: '22 ROCK 2.mp3' },
+  { n: 23, name: 'FUNK 1',    file: '23 FUNK 1.mp3' },
+  { n: 24, name: 'FUNK 2',    file: '24 FUNK 2.mp3' },
+  { n: 25, name: 'FUNK 3',    file: '25 FUNK 3.mp3' },
+  { n: 26, name: 'FUNK 4',    file: '26 FUNK 4.mp3' },
+  { n: 27, name: 'R & B',     file: '27 R & B.mp3' },
+];
+
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const loopGain = ctx.createGain();
+const dubGain = ctx.createGain();
+const clkGain = ctx.createGain();
+loopGain.gain.value = 0.8;
+dubGain.gain.value = 0.8;
+clkGain.gain.value = 0.6;
+loopGain.connect(ctx.destination);
+dubGain.connect(ctx.destination);
+clkGain.connect(ctx.destination);
+
+const bufferCache = {};
+let source = null;
+let currentBuffer = null;
+let isPlaying = false;
+let isPaused = false;
+let startedAt = 0;
+let pausedAt = 0;
+let currentIdx = -1;
+let isLooping = true;
+
+async function loadBuffer(file) {
+  if (bufferCache[file]) return bufferCache[file];
+  const res = await fetch(encodeURI(file));
+  const arr = await res.arrayBuffer();
+  const buf = await ctx.decodeAudioData(arr);
+  bufferCache[file] = buf;
+  return buf;
+}
+
+function stopSource() {
+  if (source) {
+    try { source.onended = null; source.stop(); } catch(e) {}
+    source = null;
+  }
+}
+
+function startSource(offset = 0) {
+  stopSource();
+  source = ctx.createBufferSource();
+  source.buffer = currentBuffer;
+  source.loop = isLooping;
+  source.connect(loopGain);
+  source.start(0, offset);
+  startedAt = ctx.currentTime - offset;
+  isPlaying = true;
+  isPaused = false;
+  stPlay.className = 'on';
+  stPlay.classList.add('blink');
+}
+
+function pause() {
+  if (!isPlaying) return;
+  pausedAt = (ctx.currentTime - startedAt) % currentBuffer.duration;
+  stopSource();
+  isPlaying = false;
+  isPaused = true;
+  stPlay.className = 'off';
+  stPlay.classList.remove('blink');
+}
+
+function stopAll() {
+  stopSource();
+  isPlaying = false;
+  isPaused = false;
+  pausedAt = 0;
+  stPlay.className = 'off';
+  stPlay.classList.remove('blink');
+}
+
+const tracksEl = document.getElementById('tracks');
+const lcdTrack = document.getElementById('lcd-track');
+const lcdTitle = document.getElementById('lcd-title');
+const lcdTime = document.getElementById('lcd-time');
+const lcdVol = document.getElementById('lcd-vol');
+const stPlay = document.getElementById('st-play');
+const stLoop = document.getElementById('st-loop');
+const btnPlay = document.getElementById('btn-play');
+const btnStop = document.getElementById('btn-stop');
+const btnLoop = document.getElementById('btn-loop');
+const volLoop = document.getElementById('vol-loop');
+const volDub = document.getElementById('vol-dub');
+const volClk = document.getElementById('vol-clk');
+const muteLoop = document.getElementById('mute-loop');
+const muteDub = document.getElementById('mute-dub');
+const muteClk = document.getElementById('mute-clk');
+const soloLoop = document.getElementById('solo-loop');
+const soloDub = document.getElementById('solo-dub');
+const soloClk = document.getElementById('solo-clk');
+const mix = { loopMute: false, dubMute: false, clkMute: true, loopSolo: false, dubSolo: false, clkSolo: false };
+
+function anySolo() { return mix.loopSolo || mix.dubSolo || mix.clkSolo; }
+function audible(mute, solo) { return !mute && (!anySolo() || solo); }
+function applyGains() {
+  loopGain.gain.value = audible(mix.loopMute, mix.loopSolo) ? volLoop.value / 100 : 0;
+  dubGain.gain.value  = audible(mix.dubMute,  mix.dubSolo)  ? volDub.value  / 100 : 0;
+  clkGain.gain.value  = audible(mix.clkMute,  mix.clkSolo)  ? volClk.value  / 100 : 0;
+}
+volLoop.oninput = () => { applyGains(); updateVolLcd(); };
+volDub.oninput  = () => { applyGains(); updateVolLcd(); };
+volClk.oninput  = () => { applyGains(); updateVolLcd(); };
+muteLoop.onclick = () => { mix.loopMute = !mix.loopMute; muteLoop.classList.toggle('on', mix.loopMute); applyGains(); updateVolLcd(); };
+muteDub.onclick  = () => { mix.dubMute  = !mix.dubMute;  muteDub.classList.toggle('on',  mix.dubMute);  applyGains(); updateVolLcd(); };
+muteClk.onclick  = () => { mix.clkMute  = !mix.clkMute;  muteClk.classList.toggle('on',  mix.clkMute);  applyGains(); updateVolLcd(); };
+soloLoop.onclick = () => { mix.loopSolo = !mix.loopSolo; soloLoop.classList.toggle('on', mix.loopSolo); applyGains(); updateVolLcd(); };
+soloDub.onclick  = () => { mix.dubSolo  = !mix.dubSolo;  soloDub.classList.toggle('on',  mix.dubSolo);  applyGains(); updateVolLcd(); };
+soloClk.onclick  = () => { mix.clkSolo  = !mix.clkSolo;  soloClk.classList.toggle('on',  mix.clkSolo);  applyGains(); updateVolLcd(); };
+
+function bars5(v) { const n = Math.round(v / 20); return '▮'.repeat(n) + '▯'.repeat(5 - n); }
+function chState(mute, solo, vol) {
+  if (mute) return 'OFF  ';
+  if (solo) return 'SOLO ';
+  return bars5(vol);
+}
+function updateVolLcd() {
+  const l = chState(mix.loopMute, mix.loopSolo, volLoop.value);
+  const d = chState(mix.dubMute,  mix.dubSolo,  volDub.value);
+  const c = chState(mix.clkMute,  mix.clkSolo,  volClk.value);
+  lcdVol.textContent = `L:${l} D:${d} C:${c}`;
+}
+
+tracks.forEach((t, i) => {
+  const b = document.createElement('button');
+  b.className = 'track-btn';
+  b.innerHTML = `<span class="num">${t.n}</span><span class="lbl">${t.name}</span>`;
+  b.onclick = () => selectTrack(i, true);
+  tracksEl.appendChild(b);
+});
+
+async function selectTrack(i, autoplay) {
+  currentIdx = i;
+  const t = tracks[i];
+  [...tracksEl.children].forEach((c, idx) => c.classList.toggle('active', idx === i));
+  lcdTrack.textContent = `TRACK ${String(t.n).padStart(2,'0')}`;
+  lcdTitle.textContent = 'LOADING…';
+  try {
+    currentBuffer = await loadBuffer(t.file);
+    lcdTitle.textContent = t.name;
+    pausedAt = 0;
+    stopSource();
+    clkBuffer = renderClickBuffer(currentBuffer.duration);
+    slots.A = slots.B = slots.C = null;
+    activeSlot = null;
+    slotBtns.forEach(b => b.classList.toggle('selected', b.dataset.slot === 'N'));
+    updateSlotUI();
+    await loadExistingRecordings(t.n);
+    if (autoplay) {
+      if (ctx.state === 'suspended') await ctx.resume();
+      startSource(0);
+    }
+  } catch (e) {
+    lcdTitle.textContent = 'LOAD ERROR';
+    console.error(e);
+  }
+}
+
+async function loadExistingRecordings(trackNum) {
+  for (const k of ['A','B','C']) {
+    try {
+      const res = await fetch(`recordings/${trackNum}-${k}.wav`, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const arr = await res.arrayBuffer();
+      slots[k] = await ctx.decodeAudioData(arr);
+    } catch(e) {}
+  }
+  updateSlotUI();
+}
+
+function bufferToWav(buf) {
+  const numCh = buf.numberOfChannels;
+  const sr = buf.sampleRate;
+  const len = buf.length;
+  const dataSize = len * numCh * 2;
+  const ab = new ArrayBuffer(44 + dataSize);
+  const v = new DataView(ab);
+  let p = 0;
+  const w = s => { for (let i=0;i<s.length;i++) v.setUint8(p++, s.charCodeAt(i)); };
+  const u32 = n => { v.setUint32(p, n, true); p += 4; };
+  const u16 = n => { v.setUint16(p, n, true); p += 2; };
+  w('RIFF'); u32(36 + dataSize); w('WAVE');
+  w('fmt '); u32(16); u16(1); u16(numCh); u32(sr); u32(sr*numCh*2); u16(numCh*2); u16(16);
+  w('data'); u32(dataSize);
+  const chans = [];
+  for (let c=0;c<numCh;c++) chans.push(buf.getChannelData(c));
+  for (let i=0;i<len;i++) {
+    for (let c=0;c<numCh;c++) {
+      let s = Math.max(-1, Math.min(1, chans[c][i]));
+      v.setInt16(p, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      p += 2;
+    }
+  }
+  return new Blob([ab], { type: 'audio/wav' });
+}
+
+btnPlay.onclick = async () => {
+  if (ctx.state === 'suspended') await ctx.resume();
+  if (currentIdx === -1) { selectTrack(0, true); return; }
+  if (!currentBuffer) return;
+  if (isPlaying) pause();
+  else startSource(isPaused ? pausedAt : 0);
+};
+btnStop.onclick = stopAll;
+
+document.addEventListener('keydown', (e) => {
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    document.activeElement?.blur?.();
+    btnPlay.onclick();
+  } else if (e.code === 'KeyR' && !e.metaKey && !e.ctrlKey) {
+    e.preventDefault();
+    document.activeElement?.blur?.();
+    recBtn.onclick();
+  }
+});
+btnLoop.onclick = () => {
+  isLooping = !isLooping;
+  if (source) source.loop = isLooping;
+  btnLoop.classList.toggle('active', isLooping);
+  stLoop.className = isLooping ? 'on' : 'off';
+};
+
+updateVolLcd();
+
+function fmt(s) {
+  if (!isFinite(s)) return '00:00';
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+// ─── METRONOME / CLICK ─────────────────────────────────
+let clkBuffer = null;
+let clkSource = null;
+
+function renderClickBuffer(duration) {
+  const sr = ctx.sampleRate;
+  const buf = ctx.createBuffer(1, Math.max(1, Math.round(duration * sr)), sr);
+  const data = buf.getChannelData(0);
+  const numTicks = duration >= 6 ? 16 : 8;
+  const numPositions = numTicks * 2;
+  const interval = duration / numPositions;
+  const burst = Math.round(0.05 * sr);
+  for (let i = 0; i < numPositions; i++) {
+    const t = i * interval;
+    const isTick = (i % 2) === 0;
+    const freq = isTick ? 1800 : 1100;
+    const amp = isTick ? 0.7 : 0.28;
+    const decayTau = (isTick ? 0.012 : 0.008) * sr;
+    const start = Math.round(t * sr);
+    for (let s = 0; s < burst; s++) {
+      const idx = start + s;
+      if (idx >= data.length) break;
+      const env = Math.exp(-s / decayTau);
+      data[idx] += Math.sin(2 * Math.PI * freq * s / sr) * env * amp;
+    }
+  }
+  return buf;
+}
+
+function stopClick() {
+  if (clkSource) { try { clkSource.onended = null; clkSource.stop(); } catch(e) {} clkSource = null; }
+}
+function startClick() {
+  stopClick();
+  if (!clkBuffer || !isPlaying || !currentBuffer) return;
+  const phase = (ctx.currentTime - startedAt) % currentBuffer.duration;
+  clkSource = ctx.createBufferSource();
+  clkSource.buffer = clkBuffer;
+  clkSource.loop = true;
+  clkSource.connect(clkGain);
+  clkSource.start(0, phase);
+}
+
+// ─── OVERDUB RECORDER ──────────────────────────────────
+const slots = { A: null, B: null, C: null };
+let activeSlot = null;
+let overdubSource = null;
+let recording = false;
+const devSel = document.getElementById('dev');
+const recBtn = document.getElementById('btn-rec');
+const slotBtns = document.querySelectorAll('.slot');
+
+function stopOverdub() {
+  if (overdubSource) {
+    try { overdubSource.onended = null; overdubSource.stop(); } catch(e) {}
+    overdubSource = null;
+  }
+}
+function startOverdub() {
+  stopOverdub();
+  if (!activeSlot || !slots[activeSlot] || !isPlaying || !currentBuffer) return;
+  const phase = (ctx.currentTime - startedAt) % currentBuffer.duration;
+  overdubSource = ctx.createBufferSource();
+  overdubSource.buffer = slots[activeSlot];
+  overdubSource.loop = true;
+  overdubSource.connect(dubGain);
+  overdubSource.start(0, phase);
+}
+const _origStart = startSource;
+startSource = function(offset) { _origStart(offset); startOverdub(); startClick(); };
+const _origStop = stopSource;
+stopSource = function() { _origStop(); stopOverdub(); stopClick(); };
+
+slotBtns.forEach(b => b.onclick = () => setSlot(b.dataset.slot));
+function setSlot(s) {
+  activeSlot = (s === 'N') ? null : s;
+  slotBtns.forEach(b => b.classList.toggle('selected', b.dataset.slot === s));
+  if (isPlaying) startOverdub(); else stopOverdub();
+}
+function updateSlotUI() {
+  slotBtns.forEach(b => {
+    const k = b.dataset.slot;
+    if (k !== 'N') {
+      const has = !!slots[k];
+      b.classList.toggle('filled', has);
+      b.dataset.status = has ? 'REC' : 'EMPTY';
+    }
+  });
+}
+updateSlotUI();
+
+async function populateDevices() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    const cur = devSel.value;
+    devSel.innerHTML = '<option value="">— DEFAULT MIC —</option>';
+    mics.forEach((d, i) => {
+      const o = document.createElement('option');
+      o.value = d.deviceId;
+      o.textContent = d.label || `MIC ${i+1}`;
+      devSel.appendChild(o);
+    });
+    if (cur) devSel.value = cur;
+  } catch(e) { console.error(e); }
+}
+populateDevices();
+navigator.mediaDevices?.addEventListener?.('devicechange', populateDevices);
+
+recBtn.onclick = async () => {
+  if (recording) return;
+  if (!currentBuffer) { lcdTitle.textContent = 'SELECT TRACK FIRST'; return; }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: devSel.value
+        ? { deviceId: { exact: devSel.value }, echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        : { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+  } catch(e) { lcdTitle.textContent = 'MIC DENIED'; return; }
+  populateDevices();
+
+  const targetSlot = activeSlot || 'A';
+  if (!isPlaying) { if (ctx.state === 'suspended') await ctx.resume(); startSource(0); }
+
+  recording = true;
+  recBtn.classList.add('armed');
+  recBtn.textContent = '● ARMED';
+
+  const phase = (ctx.currentTime - startedAt) % currentBuffer.duration;
+  const waitMs = Math.max(0, (currentBuffer.duration - phase) * 1000);
+
+  const mr = new MediaRecorder(stream);
+  const chunks = [];
+  mr.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  mr.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    recBtn.classList.remove('armed', 'recording');
+    recBtn.textContent = '● REC';
+    recording = false;
+    try {
+      const blob = new Blob(chunks, { type: mr.mimeType });
+      const arr = await blob.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(arr);
+      const sr = decoded.sampleRate;
+      const targetLen = Math.round(currentBuffer.duration * sr);
+      const out = ctx.createBuffer(decoded.numberOfChannels, targetLen, sr);
+      for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
+        const src = decoded.getChannelData(ch);
+        out.getChannelData(ch).set(src.subarray(0, Math.min(src.length, targetLen)));
+      }
+      slots[targetSlot] = out;
+      updateSlotUI();
+      setSlot(targetSlot);
+      try {
+        const filename = `${tracks[currentIdx].n}-${targetSlot}.wav`;
+        await fetch(`/save?name=${encodeURIComponent(filename)}`, {
+          method: 'POST', body: bufferToWav(out)
+        });
+      } catch(e) { console.warn('save failed', e); }
+    } catch(e) { console.error(e); lcdTitle.textContent = 'REC ERROR'; }
+  };
+
+  setTimeout(() => {
+    if (!recording) return;
+    recBtn.classList.remove('armed');
+    recBtn.classList.add('recording');
+    recBtn.textContent = '● REC ' + targetSlot;
+    mr.start();
+    setTimeout(() => { try { mr.stop(); } catch(e){} }, currentBuffer.duration * 1000);
+  }, waitMs);
+};
+
+// ─── PERSISTENCE ───────────────────────────────────────
+const LS_KEY = 'rapman.state.v1';
+let restoring = false;
+
+function saveState() {
+  if (restoring) return;
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      trackIdx: currentIdx,
+      slot: activeSlot,
+      mix,
+      vols: { loop: +volLoop.value, dub: +volDub.value, clk: +volClk.value },
+      isLooping,
+    }));
+  } catch(e) {}
+}
+
+function restoreState() {
+  let s;
+  try { s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch(e) {}
+  if (!s) return;
+  restoring = true;
+  if (s.vols) {
+    volLoop.value = s.vols.loop ?? volLoop.value;
+    volDub.value  = s.vols.dub  ?? volDub.value;
+    volClk.value  = s.vols.clk  ?? volClk.value;
+  }
+  if (s.mix) {
+    Object.assign(mix, s.mix);
+    muteLoop.classList.toggle('on', mix.loopMute);
+    muteDub.classList.toggle('on',  mix.dubMute);
+    muteClk.classList.toggle('on',  mix.clkMute);
+    soloLoop.classList.toggle('on', mix.loopSolo);
+    soloDub.classList.toggle('on',  mix.dubSolo);
+    soloClk.classList.toggle('on',  mix.clkSolo);
+  }
+  if (typeof s.isLooping === 'boolean') {
+    isLooping = s.isLooping;
+    btnLoop.classList.toggle('active', isLooping);
+    stLoop.className = isLooping ? 'on' : 'off';
+  }
+  applyGains();
+  updateVolLcd();
+  restoring = false;
+  if (typeof s.trackIdx === 'number' && s.trackIdx >= 0 && s.trackIdx < tracks.length) {
+    selectTrack(s.trackIdx, false).then(() => {
+      if (s.slot && s.slot !== 'N' && slots[s.slot]) setSlot(s.slot);
+    });
+  }
+}
+
+// Wrap state-mutating handlers to save
+[volLoop, volDub, volClk].forEach(el => { const o = el.oninput; el.oninput = (e) => { o?.(e); saveState(); }; });
+[muteLoop, muteDub, muteClk, soloLoop, soloDub, soloClk, btnLoop].forEach(el => { const o = el.onclick; el.onclick = (e) => { o?.(e); saveState(); }; });
+const _origSetSlot = setSlot;
+setSlot = function(s) { _origSetSlot(s); saveState(); };
+const _origSelectTrack = selectTrack;
+selectTrack = async function(i, autoplay) { await _origSelectTrack(i, autoplay); saveState(); };
+
+restoreState();
+
+setInterval(() => {
+  if (!currentBuffer) return;
+  const dur = currentBuffer.duration;
+  let cur = 0;
+  if (isPlaying) cur = (ctx.currentTime - startedAt) % dur;
+  else if (isPaused) cur = pausedAt;
+  lcdTime.textContent = `${fmt(cur)} / ${fmt(dur)}`;
+}, 100);
+</script>
+</body>
+</html>
