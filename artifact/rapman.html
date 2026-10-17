@@ -1,0 +1,691 @@
+<title>Rapman Loop Station</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Bungee&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  /* Player-only build of ../rapman.html for publishing as an artifact: no mic, no server. */
+  :root {
+    --case: #d9d2bd;
+    --case-dark: #b8ad8f;
+    --lcd: #8fa97a;
+    --lcd-dark: #2a3520;
+    --pink: #e6336b;
+    --red: #c8312f;
+    --yellow: #e8b829;
+    --blue: #2e63a6;
+    --dark: #1a1a1a;
+    --room: #1d1a16;
+    --room-glow: #2a2620;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { min-height: 100%; background: var(--room); }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--room);
+    background-image:
+      radial-gradient(circle at 20% 10%, var(--room-glow) 0%, transparent 50%),
+      radial-gradient(circle at 80% 90%, var(--room-glow) 0%, transparent 50%);
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    color: var(--dark);
+    padding-block: 30px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .device {
+    width: min(520px, 100%);
+    margin: 0 auto;
+    background: linear-gradient(160deg, var(--case) 0%, var(--case-dark) 100%);
+    border-radius: 28px;
+    padding: 22px 22px 26px;
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.6),
+      inset 0 -3px 0 rgba(0,0,0,0.15),
+      0 25px 60px rgba(0,0,0,0.6),
+      0 2px 0 rgba(0,0,0,0.4);
+    position: relative;
+  }
+  .device::before, .device::after,
+  .device .screw-bl, .device .screw-br {
+    content: "";
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #7a7060, #3a3428);
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,0.2);
+  }
+  .device::before { top: 12px; left: 12px; }
+  .device::after  { top: 12px; right: 12px; }
+  .device .screw-bl { bottom: 12px; left: 12px; }
+  .device .screw-br { bottom: 12px; right: 12px; }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0 18px 14px;
+    gap: 8px;
+  }
+  .maker {
+    font-family: 'Bungee', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #1a1a1a;
+  }
+  .rapman {
+    font-family: 'Bungee', sans-serif;
+    font-size: 28px;
+    color: var(--pink);
+    letter-spacing: 3px;
+    text-shadow:
+      2px 2px 0 #fff,
+      3px 3px 0 #1a1a1a;
+    transform: skewX(-8deg);
+  }
+  .model {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #5a5040;
+  }
+
+  .lcd {
+    background: var(--lcd);
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow:
+      inset 0 3px 8px rgba(0,0,0,0.4),
+      inset 0 -1px 0 rgba(255,255,255,0.2),
+      0 2px 0 rgba(255,255,255,0.4);
+    font-family: 'VT323', monospace;
+    color: var(--lcd-dark);
+    position: relative;
+    overflow: hidden;
+  }
+  .lcd::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.04) 0,
+      rgba(0,0,0,0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+  }
+  .lcd-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    line-height: 1.1;
+    gap: 12px;
+  }
+  .lcd-row > * { min-width: 0; white-space: nowrap; }
+  .lcd-title {
+    font-size: 28px;
+    margin: 4px 0 6px;
+    letter-spacing: 1px;
+  }
+  .lcd-status {
+    display: flex;
+    gap: 14px;
+    font-size: 18px;
+  }
+  .lcd-status .on { color: var(--lcd-dark); }
+  .lcd-status .off { color: rgba(42,53,32,0.25); }
+
+  .section-label {
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #4a4030;
+    margin: 18px 4px 8px;
+    text-transform: uppercase;
+  }
+
+  .tracks {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 12px;
+    background: linear-gradient(180deg, #b8ad8f, #a89d7d);
+    border-radius: 10px;
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,0.25),
+      inset 0 -1px 0 rgba(255,255,255,0.3);
+  }
+  .track-btn {
+    aspect-ratio: 1.4;
+    max-width: 100%;
+    min-width: 0;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 14px;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(180deg, #4a4438 0%, #2a2620 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      0 2px 0 rgba(0,0,0,0.5),
+      0 3px 4px rgba(0,0,0,0.3);
+    transition: transform 0.05s, box-shadow 0.05s;
+    padding: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .track-btn .num { font-size: 15px; }
+  .track-btn .lbl {
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    font-weight: 700;
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+    opacity: 0.75;
+  }
+  .track-btn:hover { filter: brightness(1.15); }
+  .track-btn:active, .track-btn.active {
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 2px 4px rgba(0,0,0,0.5),
+      0 0 0 rgba(0,0,0,0);
+  }
+  .track-btn.active {
+    background: linear-gradient(180deg, var(--pink) 0%, #a8214d 100%);
+  }
+
+  .transport {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .t-btn {
+    border: none;
+    border-radius: 10px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: #fff;
+    padding: 16px 10px;
+    cursor: pointer;
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.25),
+      0 4px 0 rgba(0,0,0,0.4),
+      0 5px 8px rgba(0,0,0,0.3);
+    transition: transform 0.05s, box-shadow 0.05s;
+  }
+  .t-btn:active, .t-btn.held {
+    transform: translateY(3px);
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,0.4),
+      0 1px 0 rgba(0,0,0,0.2);
+  }
+  .play { background: linear-gradient(180deg, #e8504c, var(--red)); }
+  .stop { background: linear-gradient(180deg, #444, #1a1a1a); }
+  .loop { background: linear-gradient(180deg, #f0c84a, #c89818); color: #2a2010; }
+  .loop.active {
+    background: linear-gradient(180deg, #ffe070, var(--yellow));
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,0.4),
+      0 0 12px var(--yellow),
+      0 1px 0 rgba(0,0,0,0.2);
+  }
+
+  .mixer {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, #a89d7d, #b8ad8f);
+    border-radius: 10px;
+    box-shadow:
+      inset 0 2px 5px rgba(0,0,0,0.2),
+      inset 0 -1px 0 rgba(255,255,255,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ch-label {
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #2a2410;
+    min-width: 42px;
+  }
+  .ms {
+    border: none;
+    border-radius: 6px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 12px;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    cursor: pointer;
+    background: linear-gradient(180deg, #4a4438, #2a2620);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      0 2px 0 rgba(0,0,0,0.4);
+    flex-shrink: 0;
+  }
+  .ms.on {
+    background: linear-gradient(180deg, #ff4040, #a01010);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 0 8px var(--red);
+  }
+  .ms.solo.on {
+    background: linear-gradient(180deg, #f0c84a, #c89818);
+    color: #2a2010;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 0 8px var(--yellow);
+  }
+  .ch input[type=range] {
+    flex: 1;
+    min-width: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #2a2620, #5a5040);
+    outline: none;
+  }
+  .ch input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 26px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #e8504c, var(--red));
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .ch input[type=range]::-moz-range-thumb {
+    width: 20px;
+    height: 26px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #e8504c, var(--red));
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+
+  button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  .grille {
+    margin-top: 16px;
+    height: 18px;
+    border-radius: 4px;
+    background-image: radial-gradient(circle, #3a3428 1px, transparent 1.8px);
+    background-size: 6px 6px;
+    background-color: rgba(0,0,0,0.05);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .blink { animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0.2; } }
+  @media (prefers-reduced-motion: reduce) {
+    .blink { animation: none; }
+    .track-btn, .t-btn { transition: none; }
+  }
+</style>
+
+  <div class="device">
+    <span class="screw-bl"></span><span class="screw-br"></span>
+
+    <div class="brand">
+      <span class="maker">LOOPS</span>
+      <span class="rapman">RAPMAN</span>
+      <span class="model">RP-1</span>
+    </div>
+
+    <div class="lcd">
+      <div class="lcd-row">
+        <span id="lcd-track">TRACK --</span>
+        <span class="lcd-status">
+          <span id="st-play" class="off">▶ PLAY</span>
+          <span id="st-loop" class="on">↻ LOOP</span>
+        </span>
+      </div>
+      <div class="lcd-title" id="lcd-title">SELECT RHYTHM</div>
+      <div class="lcd-row">
+        <span id="lcd-time">00:00 / 00:00</span>
+        <span id="lcd-vol">L:▮▮▮▮▯ C:OFF</span>
+      </div>
+    </div>
+
+    <div class="section-label">▼ RHYTHM SELECT</div>
+    <div class="tracks" id="tracks"></div>
+
+    <div class="transport">
+      <button class="t-btn play" id="btn-play">▶ PLAY / PAUSE</button>
+      <button class="t-btn stop" id="btn-stop">■ STOP</button>
+      <button class="t-btn loop active" id="btn-loop">↻ LOOP</button>
+    </div>
+
+    <div class="mixer">
+      <div class="ch">
+        <span class="ch-label">LOOP</span>
+        <button class="ms" id="mute-loop" title="Mute">M</button>
+        <button class="ms solo" id="solo-loop" title="Solo">S</button>
+        <input type="range" id="vol-loop" min="0" max="100" value="80" aria-label="Loop volume" />
+      </div>
+      <div class="ch">
+        <span class="ch-label">CLK</span>
+        <button class="ms on" id="mute-clk" title="Mute">M</button>
+        <button class="ms solo" id="solo-clk" title="Solo">S</button>
+        <input type="range" id="vol-clk" min="0" max="100" value="60" aria-label="Click volume" />
+      </div>
+    </div>
+
+    <div class="grille"></div>
+  </div>
+
+<script>
+const tracks = [
+  { n: 15, name: 'HEAVY RAP', file: 'loops/15-heavy-rap.mp3' },
+  { n: 16, name: 'HIP-HOP 1', file: 'loops/16-hip-hop-1.mp3' },
+  { n: 17, name: 'HIP-HOP 2', file: 'loops/17-hip-hop-2.mp3' },
+  { n: 18, name: 'HIP-HOP 3', file: 'loops/18-hip-hop-3.mp3' },
+  { n: 19, name: 'HIP HOP',   file: 'loops/19-hip-hop.mp3' },
+  { n: 20, name: 'MELLOW RAP',file: 'loops/20-mellow-rap.mp3' },
+  { n: 21, name: 'ROCK 1',    file: 'loops/21-rock-1.mp3' },
+  { n: 22, name: 'ROCK 2',    file: 'loops/22-rock-2.mp3' },
+  { n: 23, name: 'FUNK 1',    file: 'loops/23-funk-1.mp3' },
+  { n: 24, name: 'FUNK 2',    file: 'loops/24-funk-2.mp3' },
+  { n: 25, name: 'FUNK 3',    file: 'loops/25-funk-3.mp3' },
+  { n: 26, name: 'FUNK 4',    file: 'loops/26-funk-4.mp3' },
+  { n: 27, name: 'R & B',     file: 'loops/27-r-and-b.mp3' },
+];
+
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const loopGain = ctx.createGain();
+const clkGain = ctx.createGain();
+loopGain.gain.value = 0.8;
+clkGain.gain.value = 0.6;
+loopGain.connect(ctx.destination);
+clkGain.connect(ctx.destination);
+
+const bufferCache = {};
+let source = null;
+let currentBuffer = null;
+let isPlaying = false;
+let isPaused = false;
+let startedAt = 0;
+let pausedAt = 0;
+let currentIdx = -1;
+let isLooping = true;
+
+async function loadBuffer(file) {
+  if (bufferCache[file]) return bufferCache[file];
+  const res = await fetch(file);
+  if (!res.ok) throw new Error(`${file}: ${res.status}`);
+  const arr = await res.arrayBuffer();
+  const buf = await ctx.decodeAudioData(arr);
+  bufferCache[file] = buf;
+  return buf;
+}
+
+function stopSource() {
+  if (source) {
+    try { source.onended = null; source.stop(); } catch(e) {}
+    source = null;
+  }
+  stopClick();
+}
+
+function startSource(offset = 0) {
+  stopSource();
+  source = ctx.createBufferSource();
+  source.buffer = currentBuffer;
+  source.loop = isLooping;
+  source.connect(loopGain);
+  source.start(0, offset);
+  startedAt = ctx.currentTime - offset;
+  isPlaying = true;
+  isPaused = false;
+  stPlay.className = 'on';
+  stPlay.classList.add('blink');
+  startClick();
+}
+
+function pause() {
+  if (!isPlaying) return;
+  pausedAt = (ctx.currentTime - startedAt) % currentBuffer.duration;
+  stopSource();
+  isPlaying = false;
+  isPaused = true;
+  stPlay.className = 'off';
+  stPlay.classList.remove('blink');
+}
+
+function stopAll() {
+  stopSource();
+  isPlaying = false;
+  isPaused = false;
+  pausedAt = 0;
+  stPlay.className = 'off';
+  stPlay.classList.remove('blink');
+}
+
+const tracksEl = document.getElementById('tracks');
+const lcdTrack = document.getElementById('lcd-track');
+const lcdTitle = document.getElementById('lcd-title');
+const lcdTime = document.getElementById('lcd-time');
+const lcdVol = document.getElementById('lcd-vol');
+const stPlay = document.getElementById('st-play');
+const stLoop = document.getElementById('st-loop');
+const btnPlay = document.getElementById('btn-play');
+const btnStop = document.getElementById('btn-stop');
+const btnLoop = document.getElementById('btn-loop');
+const volLoop = document.getElementById('vol-loop');
+const volClk = document.getElementById('vol-clk');
+const muteLoop = document.getElementById('mute-loop');
+const muteClk = document.getElementById('mute-clk');
+const soloLoop = document.getElementById('solo-loop');
+const soloClk = document.getElementById('solo-clk');
+const mix = { loopMute: false, clkMute: true, loopSolo: false, clkSolo: false };
+
+function anySolo() { return mix.loopSolo || mix.clkSolo; }
+function audible(mute, solo) { return !mute && (!anySolo() || solo); }
+function applyGains() {
+  loopGain.gain.value = audible(mix.loopMute, mix.loopSolo) ? volLoop.value / 100 : 0;
+  clkGain.gain.value  = audible(mix.clkMute,  mix.clkSolo)  ? volClk.value  / 100 : 0;
+}
+volLoop.oninput = () => { applyGains(); updateVolLcd(); };
+volClk.oninput  = () => { applyGains(); updateVolLcd(); };
+muteLoop.onclick = () => { mix.loopMute = !mix.loopMute; muteLoop.classList.toggle('on', mix.loopMute); applyGains(); updateVolLcd(); };
+muteClk.onclick  = () => { mix.clkMute  = !mix.clkMute;  muteClk.classList.toggle('on',  mix.clkMute);  applyGains(); updateVolLcd(); };
+soloLoop.onclick = () => { mix.loopSolo = !mix.loopSolo; soloLoop.classList.toggle('on', mix.loopSolo); applyGains(); updateVolLcd(); };
+soloClk.onclick  = () => { mix.clkSolo  = !mix.clkSolo;  soloClk.classList.toggle('on',  mix.clkSolo);  applyGains(); updateVolLcd(); };
+
+function bars5(v) { const n = Math.round(v / 20); return '▮'.repeat(n) + '▯'.repeat(5 - n); }
+function chState(mute, solo, vol) {
+  if (mute) return 'OFF  ';
+  if (solo) return 'SOLO ';
+  return bars5(vol);
+}
+function updateVolLcd() {
+  const l = chState(mix.loopMute, mix.loopSolo, volLoop.value);
+  const c = chState(mix.clkMute,  mix.clkSolo,  volClk.value);
+  lcdVol.textContent = `L:${l} C:${c}`;
+}
+
+tracks.forEach((t, i) => {
+  const b = document.createElement('button');
+  b.className = 'track-btn';
+  b.innerHTML = `<span class="num">${t.n}</span><span class="lbl">${t.name}</span>`;
+  b.onclick = () => selectTrack(i, true);
+  tracksEl.appendChild(b);
+});
+
+async function selectTrack(i, autoplay) {
+  currentIdx = i;
+  const t = tracks[i];
+  [...tracksEl.children].forEach((c, idx) => c.classList.toggle('active', idx === i));
+  lcdTrack.textContent = `TRACK ${String(t.n).padStart(2,'0')}`;
+  lcdTitle.textContent = 'LOADING…';
+  try {
+    if (autoplay && ctx.state === 'suspended') await ctx.resume();
+    currentBuffer = await loadBuffer(t.file);
+    lcdTitle.textContent = t.name;
+    pausedAt = 0;
+    isPaused = false;
+    stopSource();
+    clkBuffer = renderClickBuffer(currentBuffer.duration);
+    if (autoplay) startSource(0);
+    else { isPlaying = false; stPlay.className = 'off'; }
+  } catch (e) {
+    lcdTitle.textContent = 'LOAD ERROR';
+    console.error(e);
+  }
+}
+
+btnPlay.onclick = async () => {
+  if (ctx.state === 'suspended') await ctx.resume();
+  if (currentIdx === -1) { selectTrack(0, true); return; }
+  if (!currentBuffer) return;
+  if (isPlaying) pause();
+  else startSource(isPaused ? pausedAt : 0);
+};
+btnStop.onclick = stopAll;
+
+document.addEventListener('keydown', (e) => {
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    document.activeElement?.blur?.();
+    btnPlay.onclick();
+  }
+});
+btnLoop.onclick = () => {
+  isLooping = !isLooping;
+  if (source) source.loop = isLooping;
+  btnLoop.classList.toggle('active', isLooping);
+  stLoop.className = isLooping ? 'on' : 'off';
+};
+
+applyGains();
+updateVolLcd();
+
+function fmt(s) {
+  if (!isFinite(s)) return '00:00';
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+// ─── METRONOME / CLICK ─────────────────────────────────
+let clkBuffer = null;
+let clkSource = null;
+
+function renderClickBuffer(duration) {
+  const sr = ctx.sampleRate;
+  const buf = ctx.createBuffer(1, Math.max(1, Math.round(duration * sr)), sr);
+  const data = buf.getChannelData(0);
+  const numTicks = duration >= 6 ? 16 : 8;
+  const numPositions = numTicks * 2;
+  const interval = duration / numPositions;
+  const burst = Math.round(0.05 * sr);
+  for (let i = 0; i < numPositions; i++) {
+    const t = i * interval;
+    const isTick = (i % 2) === 0;
+    const freq = isTick ? 1800 : 1100;
+    const amp = isTick ? 0.7 : 0.28;
+    const decayTau = (isTick ? 0.012 : 0.008) * sr;
+    const start = Math.round(t * sr);
+    for (let s = 0; s < burst; s++) {
+      const idx = start + s;
+      if (idx >= data.length) break;
+      const env = Math.exp(-s / decayTau);
+      data[idx] += Math.sin(2 * Math.PI * freq * s / sr) * env * amp;
+    }
+  }
+  return buf;
+}
+
+function stopClick() {
+  if (clkSource) { try { clkSource.onended = null; clkSource.stop(); } catch(e) {} clkSource = null; }
+}
+function startClick() {
+  stopClick();
+  if (!clkBuffer || !isPlaying || !currentBuffer) return;
+  const phase = (ctx.currentTime - startedAt) % currentBuffer.duration;
+  clkSource = ctx.createBufferSource();
+  clkSource.buffer = clkBuffer;
+  clkSource.loop = true;
+  clkSource.connect(clkGain);
+  clkSource.start(0, phase);
+}
+
+// ─── PERSISTENCE ───────────────────────────────────────
+const LS_KEY = 'rapman.player.v1';
+let restoring = false;
+
+function saveState() {
+  if (restoring) return;
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      trackIdx: currentIdx,
+      mix,
+      vols: { loop: +volLoop.value, clk: +volClk.value },
+      isLooping,
+    }));
+  } catch(e) {}
+}
+
+function restoreState() {
+  let s;
+  try { s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch(e) {}
+  if (!s) return;
+  restoring = true;
+  if (s.vols) {
+    volLoop.value = s.vols.loop ?? volLoop.value;
+    volClk.value  = s.vols.clk  ?? volClk.value;
+  }
+  if (s.mix) {
+    Object.assign(mix, s.mix);
+    muteLoop.classList.toggle('on', mix.loopMute);
+    muteClk.classList.toggle('on',  mix.clkMute);
+    soloLoop.classList.toggle('on', mix.loopSolo);
+    soloClk.classList.toggle('on',  mix.clkSolo);
+  }
+  if (typeof s.isLooping === 'boolean') {
+    isLooping = s.isLooping;
+    btnLoop.classList.toggle('active', isLooping);
+    stLoop.className = isLooping ? 'on' : 'off';
+  }
+  applyGains();
+  updateVolLcd();
+  restoring = false;
+  if (typeof s.trackIdx === 'number' && s.trackIdx >= 0 && s.trackIdx < tracks.length) {
+    selectTrack(s.trackIdx, false);
+  }
+}
+
+// Wrap state-mutating handlers to save
+[volLoop, volClk].forEach(el => { const o = el.oninput; el.oninput = (e) => { o?.(e); saveState(); }; });
+[muteLoop, muteClk, soloLoop, soloClk, btnLoop].forEach(el => { const o = el.onclick; el.onclick = (e) => { o?.(e); saveState(); }; });
+const _origSelectTrack = selectTrack;
+selectTrack = async function(i, autoplay) { await _origSelectTrack(i, autoplay); saveState(); };
+
+restoreState();
+
+setInterval(() => {
+  if (!currentBuffer) return;
+  const dur = currentBuffer.duration;
+  let cur = 0;
+  if (isPlaying) cur = (ctx.currentTime - startedAt) % dur;
+  else if (isPaused) cur = pausedAt;
+  lcdTime.textContent = `${fmt(cur)} / ${fmt(dur)}`;
+}, 100);
+</script>
